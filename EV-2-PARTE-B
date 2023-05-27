@@ -1,0 +1,58 @@
+import urllib.parse
+import requests
+
+
+def calcular_gasto_combustible(distancia_km):
+    eficiencia_combustible = 14.5  # Kilómetros por litro
+    litros_combustible = distancia_km / eficiencia_combustible
+    return litros_combustible
+
+
+while True:
+    print("Hola, bienvenido")
+    print("Este programa calculará por usted la distancia de su viaje además de su duración")
+    print("Solo necesitamos los datos a continuación")
+
+    main_api = "https://www.mapquestapi.com/directions/v2/route?"
+    orig = input("Ingrese ciudad de origen (o q para salir): ")
+    if orig == "q":
+        break
+    dest = input("Ingrese ciudad de destino (o q para salir): ")
+    if dest == "q":
+        break
+
+    key = "dXyi4QeSpk21SDnKYvpW1O7w9OgxfTn1"
+
+    url = main_api + urllib.parse.urlencode({"key": key, "from": orig, "to": dest})
+
+    json_data = requests.get(url).json()
+    json_status = json_data["info"]["statuscode"]
+
+    print("La URL es", url)
+
+    if json_status == 0:
+        print("API Status:", json_status, "= A successful route call.\n")
+        print("=============================================")
+        print("Directions from", orig, "to", dest)
+        print("Trip Duration:", json_data["route"]["formattedTime"])
+        distancia_km = float(json_data["route"]["distance"]) * 1.61
+        print("Kilometers:", "{:.2f}".format(distancia_km))
+        print("Gasto de combustible estimado:", "{:.2f}".format(calcular_gasto_combustible(distancia_km)), "litros")
+        print("=============================================")
+        for each in json_data["route"]["legs"][0]["maneuvers"]:
+            distancia_parcial_km = float(each["distance"]) * 1.61
+            print(each["narrative"], "(", "{:.2f}".format(distancia_parcial_km), "km)")
+            print("=============================================\n")
+    elif json_status == 402:
+        print("**********************************************")
+        print("Status Code:", json_status, "; Invalid user inputs for one or both locations.")
+        print("**********************************************\n")
+    elif json_status == 611:
+        print("**********************************************")
+        print("Status Code:", json_status, "; Missing an entry for one or both locations.")
+        print("**********************************************\n")
+    else:
+        print("************************************************************************")
+        print("For Status Code:", json_status, "; Refer to:")
+        print("https://developer.mapquest.com/documentation/directions-api/status-codes")
+        print("**************************************************]**********************\n")
